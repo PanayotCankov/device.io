@@ -7,7 +7,7 @@ let child_process = require("child_process");
 let readline = require("readline");
 
 let config = JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json")));
-console.log(`device.io ${config.version}`);
+console.log(JSON.stringify({"device.io": config.version}));
 
 let idb = child_process.spawn("bin/idb");
 let idbline = readline.createInterface({ input: idb.stdout });
