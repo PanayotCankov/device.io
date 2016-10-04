@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/PanayotCankov/device.io#readme",
   "devDependencies": {
-    "typescript": "^2.0.3"
+    "typescript": "^2.1.0-dev.20161004"
   },
   "bin": {
     "dio": "bin/dio.js"
