@@ -2,6 +2,7 @@
 
 "use strict"
 
+require("../ios/usbmuxd");
 import ADBClient from "../android/adb.client";
 
 declare var console, require, __dirname;
@@ -25,3 +26,4 @@ let adb = new ADBClient("localhost", 5037);
     // console.log(ls);
     await adb.trackDevices();
 })();
+

@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/PanayotCankov/device.io#readme",
   "devDependencies": {
+    "plist": "^2.0.1",
     "typescript": "^2.1.0-dev.20161004"
   },
   "bin": {
