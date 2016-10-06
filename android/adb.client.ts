@@ -1,136 +1,97 @@
-declare const require, console;
+import Socket from "../promise/socket";
 
-let net = require("net");
+export default class AdbClient {
+    private socket: Socket = new Socket();
 
-class AdbSocket {
-    private closed: boolean;
-    private socket = new net.Socket();
-
-    connect(host: string, port: number): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.socket.on("close", () => this.closed = true);
-            this.socket.connect(port, host, e => e ? reject(e) : resolve());
-        });
+    public connect(host: string = "localhost", port: number = 5037): Promise<void> {
+        return this.socket.connect(host, port);
     }
 
-    public write(msg: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            let len = ("0000" + (+msg.length).toString(16)).substr(-4);
-            let formattedMsg = len + msg;
-            this.socket.write(formattedMsg, e => e ? reject(e) : resolve());
-        });
+    public end(): void {
+        this.socket.end();
     }
 
-    public async checkAck(): Promise<void> {
-        let ack = await this.readBytes(4);
-        switch(ack) {
-            case "OKAY": return;
-            case "FAIL": throw "FAIL";
-            default: throw `Unexpected ${ack}`;
-        }
+    public trackDevices(callback: (status: { id: string, type: string }) => void): void {
+        (async () => {
+            await this.write("host:track-devices");
+            await this.checkAck();
+
+            let oldDevices = new Map<string, string>();
+            do {
+                let newSet = new Set();
+                (await this.readLines()).forEach(line => {
+                    let [id, type] = line.split("\t");
+                    newSet.add(id);
+                    if (oldDevices.has(id)) {
+                        if (oldDevices.get(id) == type) {
+                        } else {
+                            callback({id, type});
+                        }
+                    } else {
+                        callback({id, type});
+                        oldDevices.set(id, type);
+                    }
+                });
+                oldDevices.forEach((type, id) => {
+                    if (!newSet.has(id)) {
+                        callback({id, type: "disconnected"});
+                    }
+                })
+            } while(true);
+        })();
     }
 
-    public async read(): Promise<string> {
+    public async shellLs(): Promise<string[]> {
+        await this.write("host:transport-any");
+        await this.checkAck();
+        await this.write("shell:ls");
+        await this.checkAck();
+        return await this.readLinesToEnd();
+    }
+
+    private async read(): Promise<string> {
         let lenght = await this.readLength();
         if (lenght === 0) {
             return "";
         } else {
-            return await this.readBytes(lenght);
+            let buffer = await this.socket.read(lenght);
+            return buffer.toString("ascii");
         }
     }
 
-    public readLinesToEnd(): Promise<string[]> {
-        return new Promise((resolve, reject) => {
-            let lines = "";
-            let close = () => {
-                this.socket.removeListener("readable", read);
-                this.socket.removeListener("close", close);
-                read();
-                resolve(lines.split("\n").map(l => l.trim()).filter(l => !!l));
-            }
-            let read = () => {
-                let temp;
-                while(temp = this.socket.read()) {
-                    lines += temp.toString("ascii");
-                }
-            }
-            if (this.closed) {
-                read();
-                close();
-            } else {
-                this.socket.on("readable", read);
-                this.socket.on("close", close);
-            }
-        });
+    private async readLines(): Promise<string[]> {
+        let result = await this.read();
+        let lines = result.split("\n");
+        lines = lines.slice(0, lines.length - 1);
+        return lines;
     }
 
-    private readBytes(length: number): Promise<string> {
-        return new Promise((resolve, reject) => {
-            let read = () => {
-                let result = this.socket.read(length);
-                if (result == null) {
-                    this.socket.once("readable", read);
-                    // TODO: Subscribe for close and errors and reject.
-                } else {
-                    resolve(result.toString("ascii"));
-                }
-            };
-            read();
-        });
+    private async readLinesToEnd(): Promise<string[]> {
+        let buffer = await this.socket.readToEnd();
+        let lines: string[] = buffer.toString("ascii").split("\n").map(s => s.trim());
+        lines = lines.slice(0, lines.length - 1);
+        return lines;
     }
 
     private async readLength(): Promise<number> {
-        return parseInt(await this.readBytes(4), 16);
-    }
-}
-
-export default class ADBClient {
-    constructor(private host: string = "localhost", private port: number = 5037) {
+        return parseInt((await this.socket.read(4)).toString("ascii"), 16);
     }
 
-    public async shellLs(): Promise<string[]> {
-        let socket = await this.connect();
-        await socket.write("host:transport-any");
-        await socket.checkAck();
-        await socket.write("shell:ls");
-        await socket.checkAck();
-        return await socket.readLinesToEnd();
+    private async checkAck(): Promise<void> {
+        let ack = (await this.socket.read(4)).toString("ascii");
+        switch(ack) {
+            case "OKAY": return;
+            case "FAIL": throw "FAIL";
+            default: throw `Unexpected ${ack}.`;
+        }
     }
 
-    public async trackDevices(): Promise<void> {
-        let socket = await this.connect();
-        await socket.write("host:track-devices");
-        await socket.checkAck();
-
-        let oldDevices = new Set<string>();
-        do {
-            let newDevices =
-                (await socket.read())
-                .split("\n")
-                .filter(l => !!l)
-                .map(line => {
-                    let [id, type] = line.split("\t");
-                    return { id, type };
-                })
-                .filter(device => device.type === "device")
-                .reduce((set, device) => set.add(device.id), new Set<string>());
-            oldDevices.forEach(device => {
-                if (!newDevices.has(device)) {
-                    console.log(JSON.stringify({"action": "device.disconnected", "id": device}));
-                }
-            });
-            newDevices.forEach(device => {
-                if (!oldDevices.has(device)) {
-                    console.log(JSON.stringify({"action": "device.connected", "id": device}));
-                }
-            });
-            oldDevices = newDevices;
-        } while(true);
+    private write(message: string): Promise<void> {
+        return this.socket.write(this.format(message));
     }
 
-    private async connect(): Promise<AdbSocket> {
-        let socket = new AdbSocket();
-        await socket.connect(this.host, this.port);
-        return socket;
+    private format(message: string): string {
+        let len = ("0000" + (+message.length).toString(16)).substr(-4);
+        return len + message;
     }
 }
