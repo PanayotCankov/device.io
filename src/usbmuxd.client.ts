@@ -1,4 +1,4 @@
-import Socket from "../promise/socket";
+import Socket from "./socket";
 
 var plist = require("plist");
 

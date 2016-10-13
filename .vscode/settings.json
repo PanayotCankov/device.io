@@ -6,13 +6,9 @@
         "**/.hg": true,
         "**/.DS_Store": true,
 
-        "android/**/.js": true,
-        "android/**/.js.map": true,
+        "src/**/.js": true,
+        "src/**/.js.map": true,
         "bin/**/.js": true,
-        "bin/**/.js.map": true,
-        "ios/**/.js": true,
-        "ios/**/.js.map": true,
-        "promise/**/.js": true,
-        "promise/**/.js.map": true
+        "bin/**/.js.map": true
     }
 }

@@ -2,8 +2,8 @@
 
 "use strict"
 
-import AdbClient from "../android/adb.client";
-import UsbmuxdClient from "../ios/usbmuxd.client";
+import AdbClient from "../src/adb.client";
+import UsbmuxdClient from "../src/usbmuxd.client";
 
 (async () => {
     try {

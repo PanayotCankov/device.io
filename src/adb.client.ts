@@ -1,4 +1,4 @@
-import Socket from "../promise/socket";
+import Socket from "./socket";
 
 export default class AdbClient {
     private socket: Socket = new Socket();
