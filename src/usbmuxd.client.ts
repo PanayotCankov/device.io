@@ -14,7 +14,7 @@ export default class UsbmuxdClient {
         this.socket.end();
     }
 
-    public async trackDevices(callback: (args: {}) => void): Promise<void> {
+    public async trackDevices(callback: (args: any) => void): Promise<void> {
         await this.write({
             MessageType: 'Listen',
             ClientVersionString: 'node-usbmux',
@@ -23,8 +23,31 @@ export default class UsbmuxdClient {
         await this.checkAck();
         let json;
         while(json = await this.read()) {
-            console.log(json);
+            callback(json);
         }
+    }
+
+    /**
+     * TODO: Probably return raw new.Socket, and wrap if necessary in Usbmuxd socket, split the client.
+     * For example, file transfers, connect to 62078 and promote to lockdown socket.
+     */
+    public async connectTo(id: number, port: number): Promise<void> {
+        port = this.htons(port);
+        await this.write({
+            MessageType: "Connect",
+            ClientVersionString: 'device.io',
+            ProgName: 'device.io',
+            DeviceID: id,
+            PortNumber: port
+        });
+        await this.checkAck();
+    }
+
+    /**
+     * Converts a little endian 16 bit int number to 16 bit int big endian number.
+     */
+    private htons(port: number): number {
+        return (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
     }
 
     private async checkAck(): Promise<void> {
