@@ -28,3 +28,4 @@ fastlane/report.xml
 fastlane/screenshots
 
 iOSInjectionProject/
+.DS_store
