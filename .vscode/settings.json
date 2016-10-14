@@ -6,9 +6,11 @@
         "**/.hg": true,
         "**/.DS_Store": true,
 
-        "src/**/.js": false,
+        "node_modules": true,
+        
+        "src/**/.js": true,
         "src/**/.js.map": true,
-        "bin/**/.js": false,
+        "bin/**/.js": true,
         "bin/**/.js.map": true
     }
 }
