@@ -3,7 +3,7 @@ var net = require("net");
 export default class Socket {
     // Check for sufficient properties on socket;
     private state: "init" | "connecting" | "open" | "closed" | "error";
-    private socket: any;
+    public socket: any; // TODO: Make private.
 
     constructor() {
         this.socket = new net.Socket()

@@ -1,6 +1,53 @@
 import Socket from "./socket";
+import * as fs from "fs";
+import * as plist from "plist";
 
-var plist = require("plist");
+export class LockdownSocket {
+    /**
+     * Requres an established connection to the lockdown daemon.
+     */
+    constructor(private socket: Socket) {
+    }
+
+    public async sendFile() {
+        let Label = "device.io";
+        await this.write({Label: "iTunesHelper", Request: "QueryType"});
+        console.log(await this.read());
+
+        // TODO: sudo /var/db/lockdown/<udid>.plist
+        let pairRecord = plist.parse(fs.readFileSync("/var/db/lockdown/<udid>.plist").toString());
+        let {DeviceCertificate, HostCertificate, HostID, RootCertificate} = pairRecord;
+
+        await this.write({
+            Label,
+            PairRecord: { DeviceCertificate, HostCertificate, HostID, RootCertificate},
+            Request: "ValidatePair"
+        });
+        console.log(await this.read());
+        await this.write({
+            HostID,
+            Label,
+            Request: "StartSession"
+        });
+        console.log(await this.read());
+    }
+
+    private async read(): Promise<any> {
+        let length = (await this.socket.read(4)).readUInt32BE();
+        let buffer = await this.socket.read(length);
+        return plist.parse(buffer.toString());
+    }
+
+    private write(payload): Promise<void> {
+        let payloadPlist = plist.build(payload);
+        let payloadBuffer = new Buffer(payloadPlist);
+        let headerBuffer = new Buffer(4);
+        headerBuffer.fill(0);
+        headerBuffer.writeUInt32BE(payloadBuffer.length, 0);
+        let buffer = Buffer.concat([headerBuffer, payloadBuffer]);
+        return this.socket.write(buffer);
+    }
+}
 
 export default class UsbmuxdClient {
     private socket: Socket = new Socket();
@@ -31,7 +78,7 @@ export default class UsbmuxdClient {
      * TODO: Probably return raw new.Socket, and wrap if necessary in Usbmuxd socket, split the client.
      * For example, file transfers, connect to 62078 and promote to lockdown socket.
      */
-    public async connectTo(id: number, port: number): Promise<void> {
+    public async connectTo(id: number, port: number): Promise<Socket> {
         port = this.htons(port);
         await this.write({
             MessageType: "Connect",
@@ -41,6 +88,8 @@ export default class UsbmuxdClient {
             PortNumber: port
         });
         await this.checkAck();
+        // Give away ownership!
+        return this.socket;
     }
 
     /**
