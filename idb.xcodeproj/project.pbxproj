@@ -10,6 +10,7 @@
 		F9CDD0371D9BF69200F127A2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F9CDD0361D9BF69200F127A2 /* main.m */; };
 		F9CDD0401D9C063600F127A2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CDD03F1D9C063600F127A2 /* CoreFoundation.framework */; };
 		F9CDD0421D9CEEB900F127A2 /* MobileDevice.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CDD0411D9CEEB900F127A2 /* MobileDevice.framework */; };
+		F9F45ED11DB57F2400C09919 /* InputHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = F9F45ED01DB57F2400C09919 /* InputHandler.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,6 +31,8 @@
 		F9CDD03D1D9C05CE00F127A2 /* MobileDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MobileDevice.h; sourceTree = "<group>"; };
 		F9CDD03F1D9C063600F127A2 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		F9CDD0411D9CEEB900F127A2 /* MobileDevice.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileDevice.framework; path = ../../../../System/Library/PrivateFrameworks/MobileDevice.framework; sourceTree = "<group>"; };
+		F9F45ECF1DB57F2400C09919 /* InputHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputHandler.h; sourceTree = "<group>"; };
+		F9F45ED01DB57F2400C09919 /* InputHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InputHandler.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +69,8 @@
 			isa = PBXGroup;
 			children = (
 				F9CDD0361D9BF69200F127A2 /* main.m */,
+				F9F45ECF1DB57F2400C09919 /* InputHandler.h */,
+				F9F45ED01DB57F2400C09919 /* InputHandler.m */,
 				F9CDD03D1D9C05CE00F127A2 /* MobileDevice.h */,
 			);
 			path = idb;
@@ -138,6 +143,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F9CDD0371D9BF69200F127A2 /* main.m in Sources */,
+				F9F45ED11DB57F2400C09919 /* InputHandler.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,6 +278,7 @@
 				F9CDD03C1D9BF69200F127A2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
