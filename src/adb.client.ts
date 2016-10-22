@@ -51,7 +51,7 @@ export default class AdbClient {
         console.log("Sync!");
 
         // read dir
-        await this.writeCommandWithArgument("LIST", "/");
+        await this.writeCommandWithArgument("LIST", "sdcard/Download");
         let next: string = "DENT";
         while(next == "DENT" && (next = await this.readAck())) {
             switch (next) {
@@ -87,7 +87,9 @@ export default class AdbClient {
         console.log("Sent file so far!");
         let buffer2 = new Buffer(8);
         buffer2.write("DONE", 0, 4);
-        buffer2.writeUInt32LE(Math.floor(Date.now() / 1000), 4);
+        let mtime = Math.floor(Date.now() / 1000);
+        console.log("mtime: " + mtime);
+        buffer2.writeUInt32LE(mtime, 4);
         await this.socket.write(buffer2);
         console.log("Sent DONE with mtime");
 
