@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublish": "tsc",
-    "start": "npm link && tsc -w"
+    "start": "npm link && tsc -w",
+    "xcodebuild": "xcodebuild -configuration Release ARCHS='i386 x86_64' ONLY_ACTIVE_ARCH=NO && cp build/Release/idb bin/idb"
   },
   "repository": {
     "type": "git",

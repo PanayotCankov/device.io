@@ -1,6 +1,5 @@
 #import <Foundation/Foundation.h>
 #import "MobileDevice.h"
-#import "InputHandler.h"
 
 void writeLine(NSString* string) {
     NSFileHandle* stdout = [NSFileHandle fileHandleWithStandardOutput];
@@ -38,7 +37,6 @@ void device(struct am_device_notification_callback_info *info, void *arg) {
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        InputHandler* inputHandler = [InputHandler new];
         AMDSetLogLevel(4);
         struct am_device_notification *notify;
         AMDeviceNotificationSubscribe(&device, 0, 0, NULL, &notify);
