@@ -6,7 +6,9 @@
         "**/.hg": true,
         "**/.DS_Store": true,
 
+        "build": true,
         "node_modules": true,
+        "idb.xcodeproj": true,
         
         "src/**/.js": true,
         "src/**/.js.map": true,

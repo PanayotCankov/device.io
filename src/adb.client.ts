@@ -41,6 +41,70 @@ export default class AdbClient {
         })();
     }
 
+    public async sync(): Promise<void> {
+        await this.write("host:transport-any");
+        await this.checkAck();
+
+        await this.write("sync:");
+        console.log("Sent sync!");
+        await this.checkAck();
+        console.log("Sync!");
+
+        // read dir
+        await this.writeCommandWithArgument("LIST", "/");
+        let next: string = "DENT";
+        while(next == "DENT" && (next = await this.readAck())) {
+            switch (next) {
+                case "DENT":
+                    let stat = await this.socket.read(16);
+                    let mode = stat.readUInt32LE(0);
+                    let size = stat.readUInt32LE(4);
+                    let mtime = stat.readUInt32LE(8);
+                    let namelen = stat.readUInt32LE(12);
+                    let name = (await this.socket.read(namelen)).toString();
+                    let file = { name, mode, size, mtime };
+                    console.log(JSON.stringify(file));
+                    break;                    
+                case "DONE":
+                    await this.socket.read(16);
+                    break;
+                case "FAIL": throw "Fail";
+                default: throw "Unexpected ack: " + next;
+            }
+        }
+
+        // push file
+        await this.writeCommandWithArgument("SEND", `sdcard/Download/test.txt,${0o644}`);
+
+        // await this.checkAck();
+        let content = "Hello World!";
+        let buffer = new Buffer(8 + content.length);
+        buffer.write("DATA", 0, 4);
+        buffer.writeUInt32LE(content.length, 4);
+        buffer.write(content, 8, content.length);
+        await this.socket.write(buffer);
+
+        console.log("Sent file so far!");
+        let buffer2 = new Buffer(8);
+        buffer2.write("DONE", 0, 4);
+        buffer2.writeUInt32LE(Math.floor(Date.now() / 1000), 4);
+        await this.socket.write(buffer2);
+        console.log("Sent DONE with mtime");
+
+        let ack = await this.readAck();
+        switch (ack) {
+            case "OKAY":
+                console.log("OKAY!");
+                await this.socket.read(4);
+                break;
+            case "FAIL":
+                let len = (await this.socket.read(4)).readUInt32LE(0);
+                let msg = (await this.socket.read(len)).toString();
+                throw msg;
+            default: throw "Unexpected " + ack;
+        }
+    }
+
     public async shellLs(): Promise<string[]> {
         await this.write("host:transport-any");
         await this.checkAck();
@@ -77,8 +141,12 @@ export default class AdbClient {
         return parseInt((await this.socket.read(4)).toString("ascii"), 16);
     }
 
+    private async readAck(): Promise<string> {
+        return (await this.socket.read(4)).toString("ascii");
+    }
+
     private async checkAck(): Promise<void> {
-        let ack = (await this.socket.read(4)).toString("ascii");
+        let ack = await this.readAck();
         switch(ack) {
             case "OKAY": return;
             case "FAIL": throw "FAIL";
@@ -93,5 +161,13 @@ export default class AdbClient {
     private format(message: string): string {
         let len = ("0000" + (+message.length).toString(16)).substr(-4);
         return len + message;
+    }
+
+    private writeCommandWithArgument(command, argument): Promise<void> {
+        let buffer = new Buffer(command.length + 4 + argument.length);
+        buffer.write(command, 0, command.length);
+        buffer.writeUInt32LE(argument.length, command.length);
+        buffer.write(argument, command.length + 4);
+        return this.socket.write(buffer);
     }
 }

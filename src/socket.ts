@@ -1,4 +1,4 @@
-var net = require("net");
+import * as net from "net";
 
 export default class Socket {
     // Check for sufficient properties on socket;

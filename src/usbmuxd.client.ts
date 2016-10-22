@@ -1,6 +1,5 @@
+import * as plist from "plist";
 import Socket from "./socket";
-
-var plist = require("plist");
 
 export default class UsbmuxdClient {
     private socket: Socket = new Socket();
